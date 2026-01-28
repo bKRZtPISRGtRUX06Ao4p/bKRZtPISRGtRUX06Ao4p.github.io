@@ -147,18 +147,102 @@
             text-align: center;
             font-weight: bold;
         }
+        /* Search bar styles (matches site theme) */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.search-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 6px;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+    min-width: 260px;
+}
+
+/* Hidden label for screen readers */
+.visually-hidden {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+}
+
+/* Input styling */
+#gameSearch {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    outline: none;
+    font-size: 0.95rem;
+    padding: 6px 8px;
+    width: 220px;
+}
+
+/* Clear button */
+#clearSearch {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    transition: background-color 0.15s, color 0.15s;
+}
+#clearSearch:hover {
+    background: var(--highlight-color);
+    color: white;
+}
+
+/* Match count badge */
+.search-count {
+    background: rgba(0,0,0,0.45);
+    color: var(--text-color);
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    margin-left: 8px;
+    min-width: 36px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* Highlighted search matches inside overlay */
+.game-title-overlay mark {
+    background: transparent;
+    color: var(--highlight-color);
+    text-decoration: underline;
+    font-weight: 900;
+}
     </style>
 </head>
 <body>
 
-    <nav>
-        <a href="index.html" class="site-title">SVGLight Games</a>
+   <nav>
+    <a href="index.html" class="site-title">SVGLight Games</a>
+
+    <div class="nav-right">
+        <div class="search-wrap">
+            <label for="gameSearch" class="visually-hidden">Search games</label>
+            <input id="gameSearch" type="search" placeholder="Search games..." aria-label="Search games">
+            <button id="clearSearch" title="Clear search" aria-label="Clear search">✕</button>
+            <div id="searchCount" class="search-count" aria-hidden="true">0</div>
+        </div>
+
         <div class="nav-buttons">
             <a href="index.html" class="active">Home</a>
             <a href="index.html#games">Games</a>
             <a href="blog.html">Blog</a>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <div class="container">
         <header class="intro-section">
@@ -1176,5 +1260,110 @@
         </section>
     </div>
 
+    <script>
+(function () {
+    const input = document.getElementById('gameSearch');
+    const clearBtn = document.getElementById('clearSearch');
+    const countEl = document.getElementById('searchCount');
+
+    if (!input) return;
+
+    const gameButtons = Array.from(document.querySelectorAll('.game-button'));
+
+    gameButtons.forEach(btn => {
+        const overlay = btn.querySelector('.game-title-overlay');
+        if (!overlay) return;
+        if (!btn.dataset.originalTitle) {
+            btn.dataset.originalTitle = overlay.textContent.trim();
+        }
+    });
+
+    function updateCount(n) {
+        countEl.textContent = n;
+    }
+
+    function clearHighlights(overlay) {
+        if (!overlay) return;
+        const parent = overlay.parentElement;
+        if (parent && parent.dataset.originalTitle) {
+            overlay.innerHTML = parent.dataset.originalTitle;
+        } else {
+            overlay.innerHTML = overlay.textContent;
+        }
+    }
+
+    function highlightMatch(text, term) {
+        if (!term) return text;
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('(' + escaped + ')', 'ig');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, function (m) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+    }
+
+    function filterGames() {
+        const q = input.value.trim();
+        if (q === '') {
+            gameButtons.forEach(btn => {
+                btn.style.display = '';
+                const overlay = btn.querySelector('.game-title-overlay');
+                clearHighlights(overlay);
+            });
+            updateCount(gameButtons.length);
+            return;
+        }
+
+        let visible = 0;
+        const qLower = q.toLowerCase();
+
+        gameButtons.forEach(btn => {
+            const overlay = btn.querySelector('.game-title-overlay');
+            const original = btn.dataset.originalTitle || (overlay && overlay.textContent.trim()) || '';
+            const hay = original.toLowerCase();
+            if (hay.includes(qLower)) {
+                btn.style.display = '';
+                if (overlay) {
+                    overlay.innerHTML = highlightMatch(escapeHtml(original), q);
+                }
+                visible++;
+            } else {
+                btn.style.display = 'none';
+                if (overlay) clearHighlights(overlay);
+            }
+        });
+
+        updateCount(visible);
+    }
+
+    input.addEventListener('input', filterGames);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            filterGames();
+            input.blur();
+        }
+    });
+
+    clearBtn.addEventListener('click', function () {
+        input.value = '';
+        filterGames();
+        input.focus();
+    });
+
+    updateCount(gameButtons.length);
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            input.focus();
+            input.select();
+        }
+    });
+})();
+</script>
 </body>
 </html>
