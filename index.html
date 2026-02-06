@@ -6,6 +6,59 @@
     <title>SVGLight Games</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <style>
+
+        /* Announcement Popup Styles */
+.announcement-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.announcement-card {
+    background-color: var(--card-bg-color);
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    border: 2px solid var(--highlight-color);
+    box-shadow: 0 0 30px rgba(0, 123, 255, 0.3);
+    position: relative;
+}
+
+.announcement-card h2 {
+    color: var(--highlight-color);
+    margin-top: 0;
+}
+
+.announcement-card p {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+.close-announcement {
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    transition: background 0.3s;
+}
+
+.close-announcement:hover {
+    background-color: var(--highlight-hover);
+}
+
         :root {
             --bg-color: #121212;
             --card-bg-color: #1e1e1e;
@@ -224,6 +277,15 @@
     </style>
 </head>
 <body>
+    <div id="announcementPopup" class="announcement-overlay">
+    <div class="announcement-card">
+        <h2>⚠️ Important Update</h2>
+        <p>To ensure the secrecy of SVGLight Games, the <b>URL will be changing on February 10th</b>.</p>
+        <p>Please ask <b>Dane</b> for the new upcoming URL to keep playing!</p>
+        <button class="close-announcement" onclick="closePopup()">Got it!</button>
+    </div>
+</div>
+
 
    <nav>
     <a href="index.html" class="site-title">SVGLight Games</a>
@@ -1365,4 +1427,19 @@
 })();
 </script>
 </body>
+    <script>
+    function closePopup() {
+        document.getElementById('announcementPopup').style.display = 'none';
+        // Optional: Save to session so it doesn't reappear immediately
+        sessionStorage.setItem('announcementSeen', 'true');
+    }
+
+    // Check if they've already seen it this session
+    window.onload = function() {
+        if (sessionStorage.getItem('announcementSeen')) {
+            document.getElementById('announcementPopup').style.display = 'none';
+        }
+    };
+</script>
+
 </html>
