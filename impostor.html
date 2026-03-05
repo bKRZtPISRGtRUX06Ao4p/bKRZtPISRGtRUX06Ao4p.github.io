@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMPOSTOR</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --card: #0a0a0a;
+            --purple: #a855f7;
+            --glow: 0 0 15px #a855f7;
+            --danger: #f87171;
+            --text: #ffffff;
+        }
+        body {
+            font-family: sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0;
+        }
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            width: 320px;
+            text-align: center;
+            border: 2px solid var(--purple);
+            box-shadow: var(--glow);
+        }
+        h1 { color: var(--purple); text-shadow: var(--glow); margin-bottom: 20px; letter-spacing: 2px; }
+        input {
+            background: #111; color: white; padding: 12px;
+            border: 1px solid var(--purple); width: 100%; box-sizing: border-box;
+            border-radius: 8px; margin-bottom: 10px; outline: none;
+        }
+        button {
+            background: transparent; color: var(--purple); border: 2px solid var(--purple);
+            padding: 12px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; width: 100%; margin-top: 10px; box-shadow: var(--glow);
+        }
+        button:hover { background: var(--purple); color: black; }
+        .hidden { display: none; }
+        .label { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+        .category { font-weight: bold; color: var(--purple); font-size: 24px; margin-bottom: 15px; }
+        .word { font-size: 32px; font-weight: bold; margin: 20px 0; text-shadow: var(--glow); }
+        .impostor-text { color: var(--danger); font-size: 28px; font-weight: bold; text-shadow: 0 0 10px var(--danger); }
+        .hint-box { border: 1px dashed var(--danger); padding: 10px; margin-top: 15px; font-size: 14px; color: var(--danger); }
+        .order-display { color: var(--purple); font-size: 13px; margin-top: 15px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="screen-setup">
+        <h1>IMPOSTOR</h1>
+        <div id="input-list">
+            <input type="text" class="player-name" placeholder="Player 1">
+            <input type="text" class="player-name" placeholder="Player 2">
+            <input type="text" class="player-name" placeholder="Player 3">
+        </div>
+        <button onclick="addInput()">+ Add Player</button>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="screen-pass" class="hidden">
+        <p class="label" id="step-count">Step 1</p>
+        <p>Pass device to:</p>
+        <h2 id="next-player-name" style="color:var(--purple)">NAME</h2>
+        <button onclick="showSecret()">View Word</button>
+    </div>
+
+    <div id="screen-secret" class="hidden">
+        <p class="label">Category</p>
+        <div id="display-cat" class="category"></div>
+        <div id="box-word">
+            <p class="label">The Word</p>
+            <div id="display-word" class="word">WORD</div>
+        </div>
+        <div id="box-impostor" class="hidden">
+            <div class="impostor-text">IMPOSTOR</div>
+            <div class="hint-box">
+                <b>HINT:</b> <span id="impostor-hint"></span>
+            </div>
+        </div>
+        <button onclick="confirmSecret()">Done</button>
+    </div>
+
+    <div id="screen-play" class="hidden">
+        <h1>Discussion</h1>
+        <p class="label">Category</p>
+        <div id="play-cat" class="category"></div>
+        <p class="label">Turn Order</p>
+        <div id="play-order" class="order-display"></div>
+        <button onclick="revealResults()">Reveal Impostor</button>
+    </div>
+
+    <div id="screen-result" class="hidden">
+        <h1>Results</h1>
+        <p class="label">The Impostor was:</p>
+        <h2 id="result-name" style="color:var(--danger)">NAME</h2>
+        <p class="label">The word was:</p>
+        <h2 id="result-word" style="color:var(--purple)">WORD</h2>
+        <button onclick="location.reload()">New Game</button>
+    </div>
+</div>
+
+<script>
+    // 500 Words total (50 per Category) encrypted in Base64
+    const b64Data = "W3siYyI6IkFOSU1BTFMiLCJoIjoiVGhpbmsgYWJvdXQgbGVncywgZnVyLCBvciBoYWJpdGF0cy4iLCJ3IjpbIkxpb24iLCJUaWdlciIsIkVsZXBoYW50IiwiR2lyYWZmZSIsIlplYnJhIiwiS2FuZ2Fyb28iLCJQYW5kYSIsIktvYWxhIiwiQmVhciIsIldvbGYiLCJGb3giLCJSYWJiaXQiLCJIYW1zdGVyIiwiRG9nIiwiQ2F0IiwiSG9yc2UiLCJDb3ciLCJQaWciLCJTaGVlcCIsIkdvYXQiLCJDaGlja2VuIiwiRHVjayIsIkdvb3NlIiwiVHVya2V5IiwiUGVuZ3VpbiIsIk9zdHJpY2giLCJFbXUiLCJFYWdsZSIsIkhhd2siLCJPd2wiLCJQYXJyb3QiLCJTd2FuIiwiRmxhbWluZ28iLCJTaGFyayIsIkRvbHBoaW4iLCJXaGFsZSIsIk9jdG9wdXMiLCJDcmFiIiwiVHVydGxlIiwiU25ha2UiLCJGcm9nIiwiTGl6YXJkIiwiQ3JvY29kaWxlIiwiQmVlIiwiQnV0dGVyZmx5IiwiQW50IiwiU3BpZGVyIiwiU2NvcnBpb24iLCJCYXQiLCJNb25rZXkiXX0seyJjIjoiRk9PRCIsImgiOiJJcyBpdCBzd2VldCwgc2FsdHksIGEgc25hY2ssIG9yIGEgbWVhbD8iLCJ3IjpbIlBpenphIiwic3VzaGkiLCJidWJnZXIiLCJwYXN0YSIsInRhY28iLCJzdGVhayIsInNhbGFkIiwic291cCIsInJhbWVuIiwiY3VycnkiLCJsYXNhZ25hIiwiYnVycml0byIsImZyaWVzIiwibmFjaG9zIiwiZG9udXQiLCJjYWtlIiwicGllIiwiY29va2llIiwiaWNlIGNyZWFtIiwid2FmZmxlIiwicGFuY2FrZSIsImJhY29uIiwiZWdnIiwiY2hlZXNlIiwiYnJlYWQiLCJiYWdlbCIsImFwcGxlIiwiYmFuYW5hIiwib3JhbmdlIiwibWFuZ28iLCJncmFwZSIsInBlYWNoIiwiY2hlcnJ5Iiwia2l3aSIsImxlbW9uIiwic2FsbW9uIiwic2hyaW1wIiwidG9mdSIsIm9tZWxldHRlIiwibm9vZGxlcyIsInNhbmR3aWNoIiwic2F1c2FnZSIsImtlYmFiIiwibWVhdGJhbGwiLCJ0b2FzdCIsImNlcmVhbCIsIm11ZmZpbiIsInByZXR6ZWwiLCJwb3Bjb3JuIiwiYXZvY2FkbyIsImJlZWYiXX0seyJjIjoiTU9WSUVTIiwiaCI6IklzIGl0IGFjdGlvbiwga2lkcywgY2xhc3NpYywgb3Igc2Nhcnk/IiwidyI6WyJBdmF0YXIiLCJUaXRhbmljIiwiU3RhciBXYXJzIiwiSW5jZXB0aW9uIiwiSm9rZXIiLCJCYXRtYW4iLCJTcGlkZXItTWFuIiwiSXJvbiBNYW4iLCJGcm96ZW4iLCJTaHJlayIsIlRveSBTdG9yeSIsIkxpb24gS2luZyIsIkdsYWRpYXRvciIsIkhhcnJ5IFBvdHRlciIsIkF2ZW5nZXJzIiwiSnVyYXNzaWMgUGFyayIsIlRoZSBNYXRyaXgiLCJKYXdzIiwiQWxpZW4iLCJSb2NreSIsIlBzeWNobyIsIkdyZWFzZSIsIk1vYW5hIiwiTXVsYW4iLCJUYXJ6YW4iLCJDYXJzIiwiVXAiLCJDb2NvIiwiQnJhdmUiLCJKdW1hbmppIiwicHJlZGF0b3IiLCJHb2R6aWxsYSIsIktpbmcgS29uZyIsIlNjcmVhbSIsIlNhdyIsIlNwZWVkIiwidG9wIGd1biIsImJhbWJpIiwiZHVtYm8iLCJwaW5vY2NoaW8iLCJ6b290b3BpYSIsInJhdGF0b3VpbGxlIiwiYWxhZGRpbiIsImNhc2FibGFuY2EiLCJzZXZlbiIsImRlYWRwb29sIiwiZm9ycmVzdCBndW1wIiwidGhlIGdvZGZhdGhlciIsInB1bHAgZmljdGlvbiIsImRpZSBoYXJkIl19LHsiYyI6IkNPVU5UUklFUyIsImgiOiJUaGluayBhYm91dCB0aGUgY29udGluZW50LCB3ZWF0aGVyLCBvciBmbGFnIGNvbG9ycy4iLCJ3IjpbIlVTQSIsIkNhbmFkYSIsIk1leGljbyIsIkJyYXppbCIsIlVLIiwiRnJhbmNlIiwiR2VybWFueSIsIkl0YWx5Iiwic3BhaW4iLCJKYXBhbiIsIkNoaW5hIiwiaW5kaWEiLCJSdXNzaWEiLCJBdXN0cmFsaWEiLCJFZ3lwdCIsIkdyZWVjZSIsIlR1cmtleSIsIktvcmVhIiwiVGhhaWxhbmQiLCJOb3J3YXkiLCJTd2VkZW4iLCJGaW5sYW5kIiwiRGVubWFyayIsIlBvbGFuZCIsIklyZWxhbmQiLCJQb3J0dWdhbCIsIkJl bGdpdW0iLCJBdXN0cmlhIiwia2VueWEiLCJOaWdlcmlhIiwiTW9yb2NjbyIsIlZpZXRuYW0iLCJDaGlsZSIsIlBlcnUiLCJDdWJhIiwiSmFtYWljYSIsIklyYW4iLCJJcmFxIiwiaXNyYWVsIiwicGFraXN0YW4iLCJJY2VsYW5kIiwiTmV3IFplYWxhbmQiLCJTd2l0emVybGFuZCIsIkhvbGxhbmQiLCJTaW5nYXBvcmUiLCJNYWxheXNpYSIsIkdoYW5hIiwiQXJnZW50aW5hIiwiQ29sb21iaWEiLCJDb3N0YSBSaWNhIl19LHsiYyI6IlNQQUNFIiwiaCI6IklzIGl0IGEgcGxhbmV0LCBhIHRvb2wsIG9yIHNvbWV0aGluZyBpbiB0aGUgc2t5PyIsInciOlsiU3VuIiwiTW9vbiIsIk1hcnMiLCJKdXBpdGVyIiwiU2F0dXJuIiwiVmVudXMiLCJNZXJjdXJ5IiwiTmVwdHVuZSIsIlVyYW51cyIsIlBsdXRvIiwic3RhciIsImdhbGF4eSIsIm5lYnVsYSIsImJsYWNrIGhvbGUiLCJyb2NrZXQiLCJhc3Ryb25hdXQiLCJzYXRlbGxpdGUiLCJ0ZWxlc2NvcGUiLCJ1Zm8iLCJhbGllbiIsImNvc21vcyIsIm9yYml0IiwiZ3Jhdml0eSIsImNvbWV0IiwibWV0ZW9yIiwicm92ZXIiLCJzaHV0dGxlIiwiY2x1c3RlciIsInZvaWQiLCJxdWFzYXIiLCJmbGFyZSIsImVhcnRoIiwibWlsa3kgd2F5IiwiYW5kcm9tZWRhIiwiYXBvbGxvIiwidGl0YW4iLCJldXJvcGEiLCJ6b2RpYWMiLCJyYWRhciIsIm5vdmEiLCJjYXBzdWxlIiwic3RhdGlvbiIsImxhc2VyIiwicm9ib3QiLCJwaWxvdCIsInN5c3RlbSIsImVjbGlwc2UiLCJhc3Rlcm9pZCIsImh1YmJsZSIsIm9yaW9uIl19LHsiYyI6Ik9CSkVDVFMiLCJoIjoiU29tZXRoaW5nIHlvdSBjYXJyeSwgdXNlIGF0IGhvbWUsIG9yIHNlZSBldmVyeSBkYXkuIiwidyI6WyJrZXlzIiwid2FsbGV0IiwicGhvbmUiLCJ3YXRjaCIsImdsYXNzZXMiLCJwZW4iLCJwZW5jaWwiLCJib29rIiwibGFwdG9wIiwibW91c2UiLCJrZXlib2FyZCIsImNoYWlyIiwidGFibGUiLCJsYW1wIiwiY2xvY2siLCJtaXJyb3IiLCJkb29yIiwiYmFja3BhY2siLCJ1bWJyZWxsYSIsImJvdHRsZSIsImNhbWVyYSIsInJlbW90ZSIsImJhdHRlcnkiLCJzcG9vbiIsImtuaWZlIiwiZm9yayIsInBsYXRlIiwiY3VwIiwidG93ZWwiLCJzb2FwIiwiYnJ1c2giLCJjb21iIiwicGlsbG93IiwiYmxhbmtldCIsInJhZGlvIiwiY2FuZGxlIiwibGFkZGVyIiwiaGFtbWVyIiwic2F3IiwicnVsZXIiLCJnbG9iZSIsInB1cnNlIiwiY29pbiIsImNhcmQiLCJyaW5nIiwic3RhcGxlciIsInBhcGVyIiwiYmluZGVyIiwiZm9sZGVyIiwic2Npc3NvcnMiXX0seyJjIjoiSk9CUyIsImgiOiJEb2VzIHRoaXMgcGVyc29uIHdlYXIgYSB1bmlmb3JtIG9yIHdvcmsgaW4gYW4gb2ZmaWNlPyIsInciOlsiZG9jdG9yIiwibnVyc2UiLCJkZW50aXN0IiwicG9saWNlIiwiZmlyZWZpZ2h0ZXIiLCJwaWxvdCIsImNoZWYiLCJ0ZWFjaGVyIiwiZW5naW5lZXIiLCJhcnRpc3QiLCJhY3RvciIsIndyaXRlciIsInNjaWVudGlzdCIsImxhd3llciIsImp1ZGdlIiwidmFua2VyIiwiYmFyYmVyIiwiYmFrZXIiLCJndWFyZCIsInNweSIsInBsdW1iZXIiLCJtZWNoYW5pYyIsImRyaXZlciIsImJ1dGNoZXIiLCJmbG9yaXN0IiwidGFpbG9yIiwiZmFybWVyIiwiZmlzaGVybWFuIiwic29sZGllciIsImF0aGxldGUiLCJjb2FjaCIsIm1vZGVsIiwiZGVzaWduZXIiLCJ3YWl0ZXIiLCJwb2V0IiwiZGFuY2VyIiwiY2xvd24iLCJodW50ZXIiLCJtaW5lciIsInNtaXRoIiwibWF5b3IiLCJyYWNlciIsInNpbmdlciIsImF1dGhvciIsInR1dG9yIiwibGlicmFyaWFuIiwicHJpZXN0IiwiYWNjb3VudGFudCIsImFyY2hhZW9sb2dpc3QiLCJhcmNoaXRlY3QiXX0seyJjIjoiVEVDSCIsImgiOiJJcyBpdCBoYXJkd2FyZSwgc29mdHdhcmUsIG9yIHBhcnQgb2YgdGhlIGludGVybmV0PyIsInciOlsiaW50ZXJuZXQiLCJjb21wdXRlciIsInNtYXJ0cGhvbmUiLCJ0YWJsZXQiLCJzb2Z0d2FyZSIsImFwcCIsIndlYnNpdGUiLCJjbG91ZCIsIndpZmkiLCJibHVldG9vdGgiLCJiYXR0ZXJ5Iiwic2NyZWVuIiwicm9ib3QiLCJhaSIsImdhbWluZyIsImNvbnNvbGUiLCJjb2RlIiwiZHJvbmUiLCJjYW1lcmEiLCJwcmludGVyIiwibW91c2UiLCJrZXlib2FyZCIsIm1vbml0b3IiLCJtZW1vcnkiLCJjaGlwIiwicHl0aG9uIiwiamF2YSIsImVtYWlsIiwibWVzc2FnZSIsInNvY2lhbCIsInNlYXJjaCIsImJyb3dzZXIiLCJ3aW5kb3dzIiwiYXBwbGUiLCJnb29nbGUiLCJhbmRyb2lkIiwibGludXgiLCJzaWxpY29uIiwicGl4ZWwiLCJkYXRhIiwic2VydmVyIiwibmV0d29yayIsIm1vZGVtIiwicm91dGVyIiwic3RyZWFtIiwidmlydHVhbCIsImJpbmFyeSIsImhhY2siLCJjeWJlciIsImJsb2NrY2hhaW4iXX0seyJjIjoiQlJBTkRTIiwiaCI6IlRoaW5rIGFib3V0IGxvZ29zLCB0ZWNoLCBjbG90aGVzLCBvciBmYXN0IGZvb2QuIiwidyI6WyJhcHBsZSIsInNhbXN1bmciLCJnb29nbGUiLCJtaWNyb3NvZnQiLCJhbWF6b24iLCJuZXRmbGl4IiwidGVzbGEiLCJmb3JkIiwidG95b3RhIiwibmlrZSIsImFkaWRhcyIsInJvbGV4IiwiZ3VjY2kiLCJkaXNuZXkiLCJsZWdvIiwic29ueSIsImZhY2Vib29rIiwidGlrdG9rIiwieW91dHViZSIsInNwb3RpZnkiLCJpa2VhIiwidmlzYSIsImhvbmRhIiwiYm13IiwicGVwc2kiLCJzdGFyYnVja3MiLCJuaW50ZW5kbyIsInViZXIiLCJlYmF5IiwiY2Fub24iLCJuaWtvbiIsImRlbGwiLCJpbnRlbCIsImFkb2JlIiwidHdpdHRlciIsImluc3RhZ3JhbSIsImNva2UiLCJzdWJ3YXkiLCJ3ZW5keSIsImxleHVzIiwiZmVycmFyaSIsIm9yYWNsZSIsImNocm9tZSIsInNreXBlIiwidGFyZ2V0Iiwic2hlbGwiLCJhdWRpIiwiYm9zZSIsImFpcmJuYiIsImNhcnRpZXIiXX0seyJjIjoiTkFUVVJFIiwiaCI6IklzIGl0IGEgbGFuZHNjYXBlLCBhIHBsYW50LCBvciBwYXJ0IG9mIHRoZSB3ZWF0aGVyPyIsInciOlsidHJlZSIsImZsb3dlciIsImxlYWYiLCJncmFzcyIsIm1vdW50YWluIiwiaGlsbCIsInZhbGxleSIsInJpdmVyIiwibGFrZSIsIm9jZWFuIiwic2VhIiwiYmVhY2giLCJkZXNlcnQiLCJmb3Jlc3QiLCJqdW5nbGUiLCJpc2xhbmQiLCJjYXZlIiwid2F0ZXJmYWxsIiwic2t5IiwiY2xvdWQiLCJyYWluIiwic25vdyIsImljZSIsInN0b3JtIiwid2luZCIsImZpcmUiLCJyb2NrIiwic2FuZCIsImRpcnQiLCJzdG9uZSIsImNyeXN0YWwiLCJnb2xkIiwic2lsdmVyIiwiaXJvbiIsIndvb2QiLCJyb290Iiwic2VlZCIsImJ1ZCIsImJ1c2giLCJtb3NzIiwib2FrIiwicGluZSIsInBhbG0iLCJyb3NlIiwidHVsaXAiLCJkYWlzeSIsImNvcmFsIiwidGlkZSIsIndhdmUiLCJzaGVsbCJdfV0=";
+
+    const gameDB = JSON.parse(atob(b64Data));
+    let players = [];
+    let impostorIdx = -1;
+    let turn = 0;
+    let currentWord = "";
+    let currentCat = "";
+    let currentHint = "";
+
+    function addInput() {
+        const div = document.getElementById('input-list');
+        const count = div.getElementsByTagName('input').length;
+        if (count < 10) {
+            const input = document.createElement('input');
+            input.type = "text";
+            input.className = "player-name";
+            input.placeholder = "Player " + (count + 1);
+            div.appendChild(input);
+        }
+    }
+
+    function startGame() {
+        players = [];
+        const inputs = document.querySelectorAll('.player-name');
+        inputs.forEach(i => {
+            if (i.value.trim() !== "") players.push(i.value.trim());
+        });
+
+        if (players.length < 3) {
+            alert("Min 3 players needed.");
+            return;
+        }
+
+        const data = gameDB[Math.floor(Math.random() * gameDB.length)];
+        currentCat = data.c;
+        currentHint = data.h;
+        currentWord = data.w[Math.floor(Math.random() * data.w.length)];
+        impostorIdx = Math.floor(Math.random() * players.length);
+        turn = 0;
+
+        document.getElementById('screen-setup').classList.add('hidden');
+        showPass();
+    }
+
+    function showPass() {
+        document.getElementById('screen-secret').classList.add('hidden');
+        document.getElementById('screen-pass').classList.remove('hidden');
+        document.getElementById('next-player-name').innerText = players[turn];
+        document.getElementById('step-count').innerText = "Step " + (turn + 1) + " of " + players.length;
+    }
+
+    function showSecret() {
+        document.getElementById('screen-pass').classList.add('hidden');
+        document.getElementById('screen-secret').classList.remove('hidden');
+        document.getElementById('display-cat').innerText = currentCat;
+
+        if (turn === impostorIdx) {
+            document.getElementById('box-word').classList.add('hidden');
+            document.getElementById('box-impostor').classList.remove('hidden');
+            document.getElementById('impostor-hint').innerText = currentHint;
+        } else {
+            document.getElementById('box-word').classList.remove('hidden');
+            document.getElementById('box-impostor').classList.add('hidden');
+            document.getElementById('display-word').innerText = currentWord;
+        }
+    }
+
+    function confirmSecret() {
+        turn++;
+        if (turn < players.length) {
+            showPass();
+        } else {
+            document.getElementById('screen-secret').classList.add('hidden');
+            document.getElementById('screen-play').classList.remove('hidden');
+            document.getElementById('play-cat').innerText = currentCat;
+            document.getElementById('play-order').innerText = players.join(" → ");
+        }
+    }
+
+    function revealResults() {
+        document.getElementById('screen-play').classList.add('hidden');
+        document.getElementById('screen-result').classList.remove('hidden');
+        document.getElementById('result-name').innerText = players[impostorIdx];
+        document.getElementById('result-word').innerText = currentWord;
+    }
+</script>
+
+</body>
+</html>
