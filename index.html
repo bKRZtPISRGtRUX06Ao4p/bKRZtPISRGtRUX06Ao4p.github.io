@@ -5,289 +5,485 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVGLight Games</title>
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-
-        /* Announcement Popup Styles */
-.announcement-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.announcement-card {
-    background-color: var(--card-bg-color);
-    padding: 30px;
-    border-radius: 15px;
-    max-width: 500px;
-    width: 90%;
-    text-align: center;
-    border: 2px solid var(--highlight-color);
-    box-shadow: 0 0 30px rgba(0, 123, 255, 0.3);
-    position: relative;
-}
-
-.announcement-card h2 {
-    color: var(--highlight-color);
-    margin-top: 0;
-}
-
-.announcement-card p {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-}
-
-.close-announcement {
-    background-color: var(--highlight-color);
-    color: white;
-    border: none;
-    padding: 10px 25px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1em;
-    transition: background 0.3s;
-}
-
-.close-announcement:hover {
-    background-color: var(--highlight-hover);
-}
-
         :root {
-            --bg-color: #121212;
-            --card-bg-color: #1e1e1e;
-            --text-color: #e0e0e0;
-            --highlight-color: #007bff; /* Blue highlight */
-            --highlight-hover: #0056b3;
-            --shadow-color: rgba(0, 0, 0, 0.5);
+            --glass: rgba(255,255,255,0.045);
+            --glass-border: rgba(255,255,255,0.12);
+            --glass-hover: rgba(255,255,255,0.08);
+            --bg: #0a0a0a;
+            --text: #e8e8e8;
+            --text-muted: #777;
+            --card-size: 175px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+        /* ── Particles ── */
+        #particle-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        /* Navigation Bar Styling */
-        nav {
-            background-color: var(--card-bg-color);
-            padding: 10px 20px;
-            box-shadow: 0 4px 6px var(--shadow-color);
+        /* ── Announcement Bar ── */
+        #ann-bar {
+            position: relative;
+            z-index: 100;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 9px 48px;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.83rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            color: rgba(255,255,255,0.55);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #ann-bar .ann-pulse {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            animation: blink 1.8s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes blink {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.7); }
+        }
+
+        #ann-close {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+            line-height: 1;
+        }
+        #ann-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+        /* ── Nav ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            background: rgba(10,10,10,0.8);
+            border-bottom: 1px solid var(--glass-border);
+            height: 58px;
+            padding: 0 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
         }
 
         .site-title {
-            color: var(--highlight-color);
-            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 0.1em;
+            color: #fff;
             text-decoration: none;
-            font-size: 1.5em;
+            white-space: nowrap;
+            text-shadow: 0 0 24px rgba(255,255,255,0.2);
+        }
+        .site-title span { color: var(--text-muted); font-weight: 400; }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            min-width: 210px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .search-wrap:focus-within {
+            border-color: rgba(255,255,255,0.32);
+            background: rgba(255,255,255,0.07);
+        }
+
+        .search-wrap svg {
+            flex-shrink: 0;
+            opacity: 0.35;
+        }
+
+        #gameSearch {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            width: 100%;
+        }
+        #gameSearch::placeholder { color: var(--text-muted); }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px; height: 1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+        }
+
+        #clearSearch {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+        }
+        #clearSearch:hover { color: #fff; background: rgba(255,255,255,0.09); }
+
+        #searchCount {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
 
         .nav-buttons a {
-            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
             text-decoration: none;
-            padding: 10px 15px;
-            margin-left: 10px;
-            border-radius: 5px;
-            transition: background-color 0.3s, color 0.3s;
+            padding: 5px 13px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
         }
-
         .nav-buttons a:hover, .nav-buttons a.active {
-            background-color: var(--highlight-color);
-            color: white;
+            color: #fff;
+            background: var(--glass-hover);
+            border-color: var(--glass-border);
         }
 
-        /* Homepage Intro Section */
-        .intro-section {
-            padding: 60px 20px;
-            text-align: center;
-            background-color: var(--card-bg-color);
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px var(--shadow-color);
-        }
+        /* ── Page Shell ── */
+        .page-wrapper { position: relative; z-index: 1; }
 
-        .intro-section h1 {
-            color: var(--highlight-color);
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .intro-section p {
-            max-width: 600px;
+        .container {
+            max-width: 1120px;
             margin: 0 auto;
-            font-size: 1.1em;
+            padding: 0 24px 70px;
         }
 
-        /* Disclaimer Styling */
-        .disclaimer {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #FF0000; 
-            color: #333;
-            border-radius: 5px;
-            font-size: 0.9em;
+        /* ── Hero ── */
+        .hero {
             text-align: center;
-            font-weight: bold;
+            padding: 72px 20px 52px;
         }
 
-        /* Games Section Styling */
-        .games-section h2 {
-            margin-top: 40px;
-            color: var(--highlight-color);
-            border-bottom: 2px solid var(--highlight-color);
-            padding-bottom: 10px;
+        .hero-eyebrow {
+            display: inline-block;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.09);
+            background: rgba(255,255,255,0.04);
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 22px;
         }
 
-        .game-grid {
+        .hero h1 {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(1.9rem, 5vw, 3.2rem);
+            color: #fff;
+            letter-spacing: 0.05em;
+            line-height: 1.12;
+            margin-bottom: 16px;
+            text-shadow: 0 0 50px rgba(255,255,255,0.09);
+        }
+        .hero h1 em {
+            font-style: normal;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .hero p {
+            max-width: 520px;
+            margin: 0 auto;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        .hero p a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.18);
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .hero p a:hover { color: #fff; border-color: rgba(255,255,255,0.55); }
+
+        /* ── Disclaimer ── */
+        .disclaimer {
+            background: rgba(255,50,50,0.09);
+            border: 1px solid rgba(255,80,80,0.22);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: rgba(255,130,130,0.85);
+            text-align: center;
+            margin: 36px 0 48px;
+        }
+
+        /* ── Section Header ── */
+        .section-header {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
         }
 
+        .section-header h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--glass-border), transparent);
+        }
+
+        #gameTotalBadge {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* ── Game Grid ── */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--card-size), 1fr));
+            gap: 13px;
+        }
+
+        /* ── Game Card styles applied to your existing .game-button elements ── */
         .game-button {
             display: block;
-            width: 200px;
-            height: 200px;
-            border-radius: 15px; /* Rounded corners */
+            border-radius: 11px;
             overflow: hidden;
-            box-shadow: 0 4px 15px var(--shadow-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none;
             position: relative;
+            aspect-ratio: 1 / 1;
+            background: #141414;
+            border: 1px solid var(--glass-border);
+            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1),
+                        border-color 0.22s,
+                        box-shadow 0.22s;
         }
 
-        /* Lifting Animation */
         .game-button:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 30px var(--highlight-color);
+            transform: translateY(-7px) scale(1.025);
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 14px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07);
         }
+
+        /* Corner notch on hover */
+        .game-button::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            border-style: solid;
+            border-width: 0 20px 20px 0;
+            border-color: transparent rgba(255,255,255,0.18) transparent transparent;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .game-button:hover::before { opacity: 1; }
 
         .game-button img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
+            opacity: 0.82;
+            transition: opacity 0.25s, transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
         }
-        
+
+        /* Hide broken / empty img tags gracefully */
+        .game-button img[src=""],
+        .game-button img:not([src]) { opacity: 0; }
+
+        .game-button:hover img {
+            opacity: 1;
+            transform: scale(1.07);
+        }
+
+        /* Title overlay — same class name as your original */
         .game-title-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
+            bottom: 0; left: 0; right: 0;
+            padding: 32px 9px 9px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, transparent 100%);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #fff;
             text-align: center;
-            font-weight: bold;
+            line-height: 1.25;
+            z-index: 2;
         }
-        /* Search bar styles (matches site theme) */
-.nav-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
 
-.search-wrap {
-    display: inline-flex;
-    align-items: center;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
-    border: 1px solid rgba(255,255,255,0.04);
-    padding: 6px;
-    border-radius: 8px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-    min-width: 260px;
-}
+        /* Search highlight */
+        .game-title-overlay mark {
+            background: transparent;
+            color: #fff;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            text-decoration-color: rgba(255,255,255,0.5);
+            font-weight: 900;
+        }
 
-/* Hidden label for screen readers */
-.visually-hidden {
-    position: absolute !important;
-    height: 1px; width: 1px;
-    overflow: hidden;
-    clip: rect(1px, 1px, 1px, 1px);
-    white-space: nowrap;
-}
+        /* No results row */
+        .no-results {
+            display: none;
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
 
-/* Input styling */
-#gameSearch {
-    background: transparent;
-    border: none;
-    color: var(--text-color);
-    outline: none;
-    font-size: 0.95rem;
-    padding: 6px 8px;
-    width: 220px;
-}
+        /* ── Footer ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--glass-border);
+            padding: 18px 26px;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
 
-/* Clear button */
-#clearSearch {
-    background: transparent;
-    border: none;
-    color: var(--text-color);
-    padding: 6px 8px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    border-radius: 6px;
-    transition: background-color 0.15s, color 0.15s;
-}
-#clearSearch:hover {
-    background: var(--highlight-color);
-    color: white;
-}
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-/* Match count badge */
-.search-count {
-    background: rgba(0,0,0,0.45);
-    color: var(--text-color);
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    border-radius: 999px;
-    margin-left: 8px;
-    min-width: 36px;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-}
-
-/* Highlighted search matches inside overlay */
-.game-title-overlay mark {
-    background: transparent;
-    color: var(--highlight-color);
-    text-decoration: underline;
-    font-weight: 900;
-}
+        /* ── Responsive ── */
+        @media (max-width: 580px) {
+            :root { --card-size: 135px; }
+            .nav-buttons { display: none; }
+            .search-wrap { min-width: 150px; }
+            nav { padding: 0 14px; }
+        }
     </style>
 </head>
 <body>
-   <nav>
-    <a href="index.html" class="site-title">SVGLight Games</a>
 
+<!-- Animated Particle Background -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- ── Announcement Bar ── -->
+<div id="ann-bar">
+    <span class="ann-pulse"></span>
+    <!-- ✏️ Edit announcement text here -->
+     SVGLight Games Got a Brand New Look!
+    <button id="ann-close" aria-label="Dismiss announcement">✕</button>
+</div>
+
+<!-- ── Navigation ── -->
+<nav>
+    <a href="index.html" class="site-title">SVGLight <span>Games</span></a>
     <div class="nav-right">
         <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
             <label for="gameSearch" class="visually-hidden">Search games</label>
-            <input id="gameSearch" type="search" placeholder="Search games..." aria-label="Search games">
+            <input id="gameSearch" type="search" placeholder="Search games…" autocomplete="off" spellcheck="false">
             <button id="clearSearch" title="Clear search" aria-label="Clear search">✕</button>
-            <div id="searchCount" class="search-count" aria-hidden="true">0</div>
+            <div id="searchCount" class="search-count" aria-live="polite">0</div>
         </div>
-
         <div class="nav-buttons">
             <a href="index.html" class="active">Home</a>
             <a href="index.html#games">Games</a>
@@ -296,24 +492,36 @@
     </div>
 </nav>
 
-    <div class="container">
-        <header class="intro-section">
-            <h1>Welcome to SVGLight Games</h1>
-            <p>
-               Dane's game website curated to community requests. This website is SOLELY made by me, with various credits going to my friends for support. Thanks, you know who you are. If you have any requests at all, please use <a href="https://form.jotform.com/253498397958079">this form.</a>
-            </p>
-        </header>
+<!-- ── Page ── -->
+<div class="page-wrapper">
+<div class="container">
 
-        <section class="disclaimer">
-            ⚠️ <b>Sorry I had to delete it, I might suspended if I don't.
-</b>
-        </section>
+    <!-- Hero -->
+    <header class="hero">
+        <div class="hero-eyebrow">// Curated Game Library</div>
+        <h1>SVGLight <em>Games</em></h1>
+        <p>
+            Dane's Game Website. Please enjoy playing here, and ask me for whatever changes you may want. Have a request?
+            Use <a href="https://form.jotform.com/253498397958079" target="_blank" rel="noopener">this form</a>.
+        </p>
+    </header>
 
-        <section id="games" class="games-section">
-            <h2>Our Games</h2>
-            <div class="game-grid">
+    <!-- Disclaimer — edit text inside as needed -->
+    <div class="disclaimer">
+        ⚠ &nbsp;I am not responsible if you get in trouble. Play at your own risk.
+    </div>
 
-                <a href="1.12.html" class="game-button">
+    <!-- Games Section -->
+    <section id="games">
+        <div class="section-header">
+            <h2>// Game Library</h2>
+            <div class="section-line"></div>
+            <div id="gameTotalBadge">0 Games</div>
+        </div>
+
+        <div class="game-grid" id="gameGrid">
+
+            <a href="1.12.html" class="game-button">
                     <img src="https://p7.hiclipart.com/preview/9/187/593/minecraft-logo-video-game-clip-art-minecraft-skeleton-cliparts.jpg">
                     <div class="game-title-overlay">1.12</div>
                 </a>
@@ -534,7 +742,7 @@
                 </a>
 
                 <a href="chess.html" class="game-button">
-                    <img src="https://play-lh.googleusercontent.com/a7R5nyeaX8lIEWdBOxjlvbyq9LcFwh3XMvNtBPEKR3LPGgdvgGrec4sJwn8tUaaSkw=s256-rw=">
+                    <img src="https://img.freepik.com/premium-vector/chess-logo-business-abstract-concept-icon-black-game-figure-sign-vector-flat-style_754658-579.jpg">
                     <div class="game-title-overlay">Chess</div>
                 </a>
 
@@ -757,7 +965,12 @@
                     <img src="https://play-lh.googleusercontent.com/xbB3QLgeuMh5clpSpMLRAPJ80WV77jifWu1iz-quwQwN7kp5WCzvrLiM-Up6au20OTI">
                     <div class="game-title-overlay">Getaway Shootout</div>
                 </a>
-
+            
+                <a href="gladihoppers.html" class="game-button">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhwkGz7jvunnkVMeuLAFqGLBviGpyP0GT8qQ&s">
+                    <div class="game-title-overlay">Gladihoppers</div>
+                </a>
+            
                 <a href="googledino.html" class="game-button">
                     <img src="https://ih1.redbubble.net/image.54474161.1072/flat,750x,075,f-pad,750x1000,f8f8f8.u14.jpg">
                     <div class="game-title-overlay">Google Dino</div>
@@ -799,631 +1012,687 @@
                 </a>
 
                 <a href="jetpackjoyride.html" class="game-button">
-                    <img src="">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/9/90/Jetpack_Joyride_iOS.png">
                     <div class="game-title-overlay">Jetpack Joyride</div>
                 </a>
 
                 <a href="jumpingshell.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/8c089d8a9ee0c1715ce06261d27ab0a4/jumping-shell-logo.png">
                     <div class="game-title-overlay">Jumping Shell</div>
                 </a>
 
                 <a href="kartbros.html" class="game-button">
-                    <img src="">
+                    <img src="https://store-images.s-microsoft.com/image/apps.47920.14077711198622072.87de44b8-a3b1-4457-9a12-07ae7d1d2d1d.95bd806b-c5d5-4123-8668-d7cde469ac23?h=210">
                     <div class="game-title-overlay">Kart Bros</div>
                 </a>
 
                 <a href="learntofly.html" class="game-button">
-                    <img src="">
+                    <img src="https://ttoppl.com/storage/images/gameimgs/learntofly.jpg">
                     <div class="game-title-overlay">Learn to Fly</div>
                 </a>
 
                 <a href="learntofly2.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/grid/a3c0b5b0ab6605cf6c1d9406b592bbe8.png">
                     <div class="game-title-overlay">Learn to Fly 2</div>
                 </a>
 
                 <a href="learntofly3.html" class="game-button">
-                    <img src="">
+                    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co47j5.jpg">
                     <div class="game-title-overlay">Learn to Fly 3</div>
                 </a>
 
                 <a href="leveldevil.html" class="game-button">
-                    <img src="">
+                    <img src="https://store-images.s-microsoft.com/image/apps.10593.14411882092909650.e59c3c06-872a-420e-9804-eb29fddbff61.77661cd9-b4c3-4816-bc9a-019ff9af1073?h=210">
                     <div class="game-title-overlay">Level Devil</div>
                 </a>
 
                 <a href="melonplayground.html" class="game-button">
-                    <img src="">
+                    <img src="https://melonplayground.io/data/image/game/melon-playground.jpg">
                     <div class="game-title-overlay">Melon Playground</div>
                 </a>
 
                 <a href="minesweeper.html" class="game-button">
-                    <img src="">
+                    <img src="https://art.pixilart.com/c1690f34af719be.png">
                     <div class="game-title-overlay">Minesweeper</div>
                 </a>
 
                 <a href="monkeymart.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/rWReIdyvDaYJPeOxn7hbC0b-96ixGpQKM_EndiQa3SUME8TtI_rNUcI4qsw5teK9mqk=w240-h480-rw">
                     <div class="game-title-overlay">Monkey Mart</div>
                 </a>
 
                 <a href="monstertracks.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/41c7ae4db13e7d7596bb0528f40a4012/monster-tracks-logo.png">
                     <div class="game-title-overlay">Monster Tracks</div>
                 </a>
 
                 <a href="motox3m.htm" class="game-button">
-                    <img src="">
+                    <img src="https://moto-x3m.io/data/image/image.jpeg">
                     <div class="game-title-overlay">Moto X3M</div>
                 </a>
 
                 <a href="motox3m2.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/icon_thumb/0147c7858d3cdcb91fd47100303509ee.png">
                     <div class="game-title-overlay">Moto X3M 2</div>
                 </a>
 
                 <a href="motox3m3.html" class="game-button">
-                    <img src="">
+                    <img src="https://motox3m.gitlab.io/logo.png">
                     <div class="game-title-overlay">Moto X3M 3</div>
                 </a>
 
                 <a href="ovo.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/v7KwGdPjJGjJjRXn46sck4DwDBdKSeRzGN44CjiXUtKV0jjOi51Bt4wcXud0m-SkXg">
                     <div class="game-title-overlay">OvO</div>
                 </a>
 
                 <a href="ovo2.html" class="game-button">
-                    <img src="">
+                    <img src="https://images.rocketgames.io/uploads/games/o/ovo-2/ovo-2.aedfcd.jpg">
                     <div class="game-title-overlay">OvO 2</div>
                 </a>
 
                 <a href="pacman.html" class="game-button">
-                    <img src="">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/7/7a/PacMan40Anniversary.png">
                     <div class="game-title-overlay">Pac-Man</div>
                 </a>
 
                 <a href="papasfreezeria.html" class="game-button">
-                    <img src="">
+                    <img src="https://m.media-amazon.com/images/I/71TT6Pf66DL.png">
                     <div class="game-title-overlay">Papa's Freezeria</div>
                 </a>
 
                 <a href="papaspizzeria.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/377fd7d97c2b2f4fe25618ccffcc601b/papas-pizzeria-logo.jfif">
                     <div class="game-title-overlay">Papa's Pizzeria</div>
                 </a>
 
                 <a href="papastacomia.html" class="game-button">
-                    <img src="">
+                    <img src="https://m.media-amazon.com/images/I/71NVlWaAZWL.png">
                     <div class="game-title-overlay">Papa's Taco Mia</div>
                 </a>
 
                 <a href="paperio2.htm" class="game-button">
-                    <img src="">
+                    <img src="https://cdn.aptoide.com/imgs/e/0/2/e025ad67d2c35bb1725fcc77f160f262_icon.png">
                     <div class="game-title-overlay">Paper.io 2</div>
                 </a>
 
                 <a href="parkingfury.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/DgyqJCW3t0o7prr-6dajdhox4p7maqchfBAArxD5JRwbG-20AxXR7RJbgs6kW8cRjkm0">
                     <div class="game-title-overlay">Parking Fury</div>
                 </a>
 
                 <a href="parkingfury2.html" class="game-button">
-                    <img src="">
+                    <img src="https://kizicdn.com/system/static/thumbs/big_tile_thumb/1666/thumb300_pf2_icon_300.jpg?1556202804">
                     <div class="game-title-overlay">Parking Fury 2</div>
                 </a>
 
                 <a href="parkingfury3.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.gamedistribution.com/67f5943d779b41b2bc6a67ce132b7c68-512x512.jpeg">
                     <div class="game-title-overlay">Parking Fury 3</div>
                 </a>
 
                 <a href="picosschool.html" class="game-button">
-                    <img src="">
+                    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co2y9q.jpg">
                     <div class="game-title-overlay">Pico's School</div>
                 </a>
 
                 <a href="pingpongchaos.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn-1.webcatalog.io/catalog/poki-ping-pong-chaos/poki-ping-pong-chaos-icon-filled-256.png?v=1714779606919">
                     <div class="game-title-overlay">Ping Pong Chaos</div>
                 </a>
 
                 <a href="polytrack.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/thumb/9442e15eadaf27455b8b4f25dbc1f182.jpg">
                     <div class="game-title-overlay">PolyTrack</div>
                 </a>
 
                 <a href="pou.html" class="game-button">
-                    <img src="">
+                    <img src="https://e7.pngegg.com/pngimages/950/491/png-clipart-pou-android-link-free-google-play-android-video-game-mobile-phones-thumbnail.png">
                     <div class="game-title-overlay">Pou</div>
                 </a>
 
                 <a href="ragdollarchers.htm" class="game-button">
-                    <img src="">
+                    <img src="https://imgs.crazygames.com/ragdoll-archers_1x1/20250926080758/ragdoll-archers_1x1-cover?format=auto&quality=100&metadata=none&width=1200">
                     <div class="game-title-overlay">Ragdoll Archers</div>
                 </a>
 
                 <a href="ragdollhit.html" class="game-button">
-                    <img src="">
+                    <img src="https://slope3.com/upload/cache/upload/imgs/ragdoll-hit-m240x240.jpg">
                     <div class="game-title-overlay">Ragdoll Hit</div>
                 </a>
 
                 <a href="ragdollsoccer.html" class="game-button">
-                    <img src="">
+                    <img src="https://imgs.crazygames.com/ragdoll-soccer-2-players_1x1/20241209062337/ragdoll-soccer-2-players_1x1-cover?format=auto&quality=100&metadata=none&width=1200">
                     <div class="game-title-overlay">Ragdoll Soccer</div>
                 </a>
 
                 <a href="redball4vol1.html" class="game-button">
-                    <img src="">
+                    <img src="https://lambda.vgmtreasurechest.com/soundtracks/red-ball-4-vol-1-flash-online-gamerip-2014/Cover.png">
                     <div class="game-title-overlay">Red Ball 4 Vol. 1</div>
                 </a>
 
                 <a href="redball4vol2.html" class="game-button">
-                    <img src="">
+                    <img src="https://lambda.vgmtreasurechest.com/soundtracks/red-ball-4-vol-1-flash-online-gamerip-2014/Cover.png">
                     <div class="game-title-overlay">Red Ball 4 Vol. 2</div>
                 </a>
 
                 <a href="redball4vol3.html" class="game-button">
-                    <img src="">
+                    <img src="https://lambda.vgmtreasurechest.com/soundtracks/red-ball-4-vol-1-flash-online-gamerip-2014/Cover.png">
                     <div class="game-title-overlay">Red Ball 4 Vol. 3</div>
                 </a>
 
                 <a href="retrobowl.html" class="game-button">
-                    <img src="">
+                    <img src="https://pbs.twimg.com/profile_images/1217942835527409665/swRMqEkK_400x400.jpg">
                     <div class="game-title-overlay">Retro Bowl</div>
                 </a>
 
                 <a href="retrobowlcollege.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/-BT8C-1UPYWouyjVvWYgaar_-xV4IQvX4Bvib3koGEGiy6UsHlt0RgYpUrdTDfC2y0ct">
                     <div class="game-title-overlay">Retro Bowl College</div>
                 </a>
 
                 <a href="retropingpong.html" class="game-button">
-                    <img src="">
+                    <img src="https://www.coolmathgames.com/sites/default/files/retro-ping-pong-game-icon.png">
                     <div class="game-title-overlay">Retro Ping Pong</div>
                 </a>
 
                 <a href="riddleschool.html" class="game-button">
-                    <img src="">
+                    <img src="https://images.teepublic.com/derived/production/designs/595632_1/1469158860/i_p:c_191919,s_630,q_90.jpg">
                     <div class="game-title-overlay">Riddle School</div>
                 </a>
 
                 <a href="riddleschool2.html" class="game-button">
-                    <img src="">
+                    <img src="https://a.silvergames.com/j/b/riddle-school-2.jpg">
                     <div class="game-title-overlay">Riddle School 2</div>
                 </a>
 
                 <a href="riddleschool3.html" class="game-button">
-                    <img src="">
+                    <img src="https://www.onlinegames.io/media/posts/1210/riddle-school-3.webp">
                     <div class="game-title-overlay">Riddle School 3</div>
                 </a>
 
                 <a href="riddleschool4.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/grid/c25f8f721163e81bfb17f023fde57d72.png">
                     <div class="game-title-overlay">Riddle School 4</div>
                 </a>
 
                 <a href="riddleschool5.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/thumb/f2f5d434b95d922cbe987ac1fb454688.jpg">
                     <div class="game-title-overlay">Riddle School 5</div>
                 </a>
 
                 <a href="riddletransfer.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnnRp1s4UPk1skrWE3zyW70FUz43H2G7NjmQ&s">
                     <div class="game-title-overlay">Riddle Transfer</div>
                 </a>
 
                 <a href="riddletransfer2.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSs9e46lAC0_H3ImWogvyXfprGHCLzCAEfAjg&s">
                     <div class="game-title-overlay">Riddle Transfer 2</div>
                 </a>
 
                 <a href="rocketsoccerderby.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/ZSLQpJsfi6GrsPoTpKh-IDkR_YcBdIG96pUi6KToYrHssFKkuV1lQQ5sLf08f5He3bE">
                     <div class="game-title-overlay">Rocket Soccer Derby</div>
                 </a>
 
                 <a href="rooftopsnipers.htm" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/c127771edb0e821e4109b7058ae3f094/rooftop-snipers.jpeg">
                     <div class="game-title-overlay">Rooftop Snipers</div>
                 </a>
 
                 <a href="rooftopsnipers2.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/895b299e7e49558ca383b23648314860/rooftop-snipers-2.png">
                     <div class="game-title-overlay">Rooftop Snipers 2</div>
                 </a>
 
                 <a href="run.html" class="game-button">
-                    <img src="">
+                    <img src="https://www.coolmathgames.com/sites/default/files/2024-09/Run-series.svg">
                     <div class="game-title-overlay">Run</div>
                 </a>
 
                 <a href="run2.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjPUCfVmD-GhPgxn0ecfBHTQm3f6BTSdB5Bg&s">
                     <div class="game-title-overlay">Run 2</div>
                 </a>
 
                 <a href="run3.html" class="game-button">
-                    <img src="">
+                    <img src="https://assets1.ignimgs.com/2018/06/18/run-3-0-button-1529363477468.jpg">
                     <div class="game-title-overlay">Run 3</div>
                 </a>
 
                 <a href="sandgame.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8XDebUD-jsFjoXkdBec2fC-1HmoKnP8CBGw&s">
                     <div class="game-title-overlay">Sand Game</div>
                 </a>
 
                 <a href="slope.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/uJn2i9h7KxYQarC_c3K4qH6o7gLtflFnhD_dN14MNkzHJ1NeNFzCL69jpB5mT0vCoQs">
                     <div class="game-title-overlay">Slope</div>
                 </a>
 
                 <a href="slope2player.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1LzrlcLgoyz4Wfq-czWCI-GdtEB_pLWJY1Q&s">
                     <div class="game-title-overlay">Slope 2 Player</div>
                 </a>
 
                 <a href="slope3.html" class="game-button">
-                    <img src="">
+                    <img src="https://geometryvibes.io/upload/imgs/slope-3.jpg">
                     <div class="game-title-overlay">Slope 3</div>
                 </a>
 
                 <a href="sm63.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPUFrAGG_92gNsK0xRRtbxsjKKxf6dDGzmdw&s">
                     <div class="game-title-overlay">SM63</div>
                 </a>
 
                 <a href="sm64.html" class="game-button">
-                    <img src="">
+                    <img src="https://assets1.ignimgs.com/2019/05/31/mario-64---button-1559263987447.jpg">
                     <div class="game-title-overlay">SM64</div>
                 </a>
 
                 <a href="snowrider.htm" class="game-button">
-                    <img src="">
+                    <img src="https://snow-rider-3d.github.io/assets/images/image1.png">
                     <div class="game-title-overlay">Snow Rider</div>
                 </a>
 
                 <a href="snowroad.htm" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVDJCeFfzhvhhGkf4xJERXF1ePRMOuBKqYPw&s">
                     <div class="game-title-overlay">Snow Road</div>
                 </a>
 
                 <a href="soccerbros.html" class="game-button">
-                    <img src="">
+                    <img src="https://imgs.crazygames.com/soccer-bros_1x1/20240109055124/soccer-bros_1x1-cover?format=auto&quality=100&metadata=none&width=1200">
                     <div class="game-title-overlay">Soccer Bros</div>
                 </a>
 
                 <a href="soccerrandom.htm" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/G1PIlb6HWKSaDre0XpUcmKGps9T4iamsSlwrogB3EJzYv4bz0M2am4D17MtGzndaOOU">
                     <div class="game-title-overlay">Soccer Random</div>
                 </a>
 
                 <a href="spacewaves.html" class="game-button">
-                    <img src="">
+                    <img src="https://spacewaves.io/game/space-wave/logo.png">
                     <div class="game-title-overlay">Space Waves</div>
                 </a>
 
                 <a href="speedstars.html" class="game-button">
-                    <img src="">
+                    <img src="https://speed-stars.io/data/image/game/speedstars.png">
                     <div class="game-title-overlay">Speed Stars</div>
                 </a>
 
-                <a href="sprunki.html" class="game-button">
-                    <img src="">
-                    <div class="game-title-overlay">Sprunki</div>
-                </a>
-
                 <a href="stack.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn.aptoide.com/imgs/a/3/a/a3a7f15e381ba83df1553b62907a8b32_icon.png">
                     <div class="game-title-overlay">Stack</div>
                 </a>
 
                 <a href="stateio.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/4BGa0wvmAl_YyKXY-p3FYfwfPKdNqxVP5hmVGQv_vUVKOhgmRUzxAPo-XtsorWxvzMM">
                     <div class="game-title-overlay">State.io</div>
                 </a>
 
                 <a href="stickmanhook.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/99e090d154caf30f3625df7e456d5984/stickman-hook-logo.png">
                     <div class="game-title-overlay">Stickman Hook</div>
                 </a>
 
                 <a href="subwaysurfersbeijing.html" class="game-button">
-                    <img src="">
+                    <img src="https://fuzigames.com/games/subway-surfers-beijing.webp">
                     <div class="game-title-overlay">Subway Surfers Beijing</div>
                 </a>
 
                 <a href="subwaysurfershavana.html" class="game-button">
-                    <img src="">
+                    <img src="https://geometrydashfullversion.io/data/image/game/subway-surfers-havana/subway-surfers-havana.jpg">
                     <div class="game-title-overlay">Subway Surfers Havana</div>
                 </a>
 
                 <a href="subwaysurferssanfrancisco.html" class="game-button">
-                    <img src="">
+                    <img src="https://ozogames.com/uploads/2026/04/1775236974486-jjr59mo.webp">
                     <div class="game-title-overlay">Subway Surfers San Francisco</div>
                 </a>
 
                 <a href="superstarcar.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT7CDxGxL-aEZf0Uo6NjQI4NU9ZVDdyGyrezA&s">
                     <div class="game-title-overlay">Superstar Car</div>
                 </a>
 
                 <a href="tag.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/32d2b1401c7a86c61fae5afeed977b37/tag-logo.png">
                     <div class="game-title-overlay">Tag</div>
                 </a>
 
                 <a href="templeofboom.html" class="game-button">
-                    <img src="">
+                    <img src="https://ozogames.com/uploads/2025/12/Temple-Of-Boom-image.webp">
                     <div class="game-title-overlay">Temple of Boom</div>
                 </a>
 
                 <a href="templerun2.htm" class="game-button">
-                    <img src="">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/9/98/Temple_Run_2.png">
                     <div class="game-title-overlay">Temple Run 2</div>
                 </a>
 
                 <a href="territorialio.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/51Sh28L_ZYYkIHJHSmT4s_w3E8vXdTJlWUtfAxx9W91m090qx0QoN7Zr810V4bNdOoY">
                     <div class="game-title-overlay">Territorial.io</div>
                 </a>
 
                 <a href="thereisnog.html" class="game-button">
-                    <img src="">
+                    <img src="https://cdn2.steamgriddb.com/logo/5faa4ad014bbddf9ae4006a0f03085e0.png">
                     <div class="game-title-overlay">There Is No Game</div>
                 </a>
 
                 <a href="timeshooter2.html" class="game-button">
-                    <img src="">
+                    <img src="https://imgs.crazygames.com/time-shooter-2_1x1/20241113040556/time-shooter-2_1x1-cover?format=auto&quality=100&metadata=none&width=1200">
                     <div class="game-title-overlay">Time Shooter 2</div>
                 </a>
 
                 <a href="timeshooter3.htm" class="game-button">
-                    <img src="">
+                    <img src="https://imgs.crazygames.com/time-shooter-3-swat_1x1/20241113103402/time-shooter-3-swat_1x1-cover?format=auto&quality=100&metadata=none&width=1200">
                     <div class="game-title-overlay">Time Shooter 3</div>
                 </a>
 
                 <a href="tinyfishing.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/c8cb366d52fc2a67fb313c344efdbc9e/tiny-fishing-logo.png">
                     <div class="game-title-overlay">Tiny Fishing</div>
                 </a>
 
                 <a href="tombofthemask.htm" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/ATGr-U4JBK2VjFzKGK9eMMkrDxJaazadOUoz_7Yl0U5NrWSFcFUzEtNurWXYzVWc8uOO">
                     <div class="game-title-overlay">Tomb of the Mask</div>
                 </a>
 
                 <a href="trapthecat.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9O2j8hCFPDDw6a0CYqyDZjlZl9dQ0dDMGbg&s">
                     <div class="game-title-overlay">Trap the Cat</div>
                 </a>
 
                 <a href="tubejumpers.html" class="game-button">
-                    <img src="">
+                    <img src="https://www5.minijuegosgratis.com/v3/games/thumbnails/219245_7_sq.jpg">
                     <div class="game-title-overlay">Tube Jumpers</div>
                 </a>
 
                 <a href="tunnelrush.html" class="game-button">
-                    <img src="">
+                    <img src="https://tunnelrush3.com/upload/imgs/options/tunnel-rush-logo.jpg">
                     <div class="game-title-overlay">Tunnel Rush</div>
                 </a>
 
                 <a href="unicyclehero.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/4089ea8322c7fe8a5416ef5ee237ea53/unicycle-hero-logo.png">
                     <div class="game-title-overlay">Unicycle Hero</div>
                 </a>
 
                 <a href="vex5.html" class="game-button">
-                    <img src="">
+                    <img src="https://img.gamedistribution.com/f120262ab72743039fbce88c1f370df8-512x512.jpg">
                     <div class="game-title-overlay">Vex 5</div>
                 </a>
 
                 <a href="vex6.htm" class="game-button">
-                    <img src="">
+                    <img src="https://img.gamedistribution.com/4925e12574364121a48c61c35f649c36-512x512.jpeg">
                     <div class="game-title-overlay">Vex 6</div>
                 </a>
 
                 <a href="vex7.htm" class="game-button">
-                    <img src="">
+                    <img src="https://img.gamedistribution.com/0c454c9562d249d28ba3a2b50564042c-512x512.jpg">
                     <div class="game-title-overlay">Vex 7</div>
                 </a>
 
                 <a href="vex8.htm" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/4tQSYur7SAvXeEvT5GBugYeqbh8KEQSLd1S16t8CJYyDN3g2p27wiPlXnqqAxeCqvg">
                     <div class="game-title-overlay">Vex 8</div>
                 </a>
 
                 <a href="volleyrandom.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/VeKAevaOjPlcyCtOpFY1h6SjwEjnu4ryG3xQ_qw1Muuhrg8pqwhl1aPjWovMkjc0Rc4">
                     <div class="game-title-overlay">Volley Random</div>
                 </a>
 
                 <a href="webecomewhatwebehold.html" class="game-button">
-                    <img src="">
+                    <img src="https://we-become-what-we-behold.com/wp-content/uploads/2025/10/We-Become-What-We-Behold.webp">
                     <div class="game-title-overlay">We Become What We Behold</div>
                 </a>
 
                 <a href="wheely.html" class="game-button">
-                    <img src="">
+                    <img src="https://tcf.admeen.org/category/3000/2975/400x400/wheely.jpg">
                     <div class="game-title-overlay">Wheely</div>
                 </a>
 
                 <a href="wheely2.html" class="game-button">
-                    <img src="">
+                    <img src="https://cargames.gg/wp-content/uploads/2026/01/Wheely-2-1024x1024.webp">
                     <div class="game-title-overlay">Wheely 2</div>
                 </a>
 
                 <a href="wheely3.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9KCipfYdXPQ0KnK19no_rfT6Kr4gWXMDsDQ&s">
                     <div class="game-title-overlay">Wheely 3</div>
                 </a>
 
                 <a href="wheely4.html" class="game-button">
-                    <img src="">
+                    <img src="https://m.media-amazon.com/images/I/71u0Z58uhGL.png">
                     <div class="game-title-overlay">Wheely 4</div>
                 </a>
 
                 <a href="wheely5.html" class="game-button">
-                    <img src="">
+                    <img src="https://www.mathnook.com/img/addthis-fun-games/wheely-5-200x200.png">
                     <div class="game-title-overlay">Wheely 5</div>
                 </a>
 
                 <a href="wheely6.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQB2J396AOm7JkiphFT0_40C_lmnEnql8hYRQ&s">
                     <div class="game-title-overlay">Wheely 6</div>
                 </a>
 
                 <a href="wheely7.html" class="game-button">
-                    <img src="">
+                    <img src="https://www.plonga.com/storage/game-thumbs/wheely-7-game.jpg">
                     <div class="game-title-overlay">Wheely 7</div>
                 </a>
 
                 <a href="wheely8.html" class="game-button">
-                    <img src="">
+                    <img src="https://kizicdn.com/system/static/thumbs/big_tile_thumb/1633/thumb300_w8_300_300.jpg?1556202716">
                     <div class="game-title-overlay">Wheely 8</div>
                 </a>
 
                 <a href="worldshardestgame.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/WoyHFBEgzmhlM0VCsmH3zPqPFquIYZHQLCbcpVOBKgY4ku7Xb3XIB7rMWwZ6oLsAACA">
                     <div class="game-title-overlay">World's Hardest Game</div>
                 </a>
 
                 <a href="worldshardestgame2.html" class="game-button">
-                    <img src="">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_s2qA7tXoxNjAy3GHfJmabxLmcB-1lRJlVg&s">
                     <div class="game-title-overlay">World's Hardest Game 2</div>
                 </a>
 
                 <a href="worldshardestgame3.html" class="game-button">
-                    <img src="">
+                    <img src="https://play-lh.googleusercontent.com/VJyKOCBuE9r08Cscw91kvcBpZHBduido-HW1kisyR50yrldHtWRgyXVudiITnnGxoDE">
                     <div class="game-title-overlay">World's Hardest Game 3</div>
                 </a>
 
                 <a href="wrestlebros.html" class="game-button">
-                    <img src="">
+                    <img src="https://images.twoplayergames.org/files/games/other/WrestleBros.jpg?auto=format&w=200">
                     <div class="game-title-overlay">Wrestle Bros</div>
                 </a>
 
-                <a href="fnae.html" class="game-button">
-                    <img src="https://sandovallegacygroup.com/wp-content/uploads/2025/08/Screenshot-2025-08-14-at-9.19.56-AM-854x675.png">
-                    <div class="game-title-overlay">Five Nights at Epstein's</div>
-                </a>
-
-                <a href="gladihoppers.html" class="game-button">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhwkGz7jvunnkVMeuLAFqGLBviGpyP0GT8qQ&s">
-                    <div class="game-title-overlay">Gladihoppers</div>
-                </a>
-
-                <a href="impostor.html" class="game-button">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvvJqnjJE1SKwrXfEVw79FUeFrevZLOD7zoQ&s">
-                    <div class="game-title-overlay">Impostor</div>
-                </a>
-
-                <a href="eclicker.html" class="game-button">
-                    <img src="data:image/jpeg;base64,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">
-                    <div class="game-title-overlay">Epstein Clicker</div>
-                </a>
             </div>
         </section>
     </div>
 
-    <script>
-(function () {
-    const input = document.getElementById('gameSearch');
-    const clearBtn = document.getElementById('clearSearch');
-    const countEl = document.getElementById('searchCount');
+            <div class="no-results" id="noResults">No games match your search.</div>
+        </div>
+    </section>
 
+</div><!-- /.container -->
+</div><!-- /.page-wrapper -->
+
+<footer>
+    SVGLight Games &nbsp;·&nbsp; All rights reserved
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  SCRIPTS — no edits needed below this line                     -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<script>
+/* ── Particle Background ── */
+(function () {
+    const canvas = document.getElementById('particle-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, particles;
+
+    const COUNT    = 90;
+    const MAX_DIST = 140;
+    const SPEED    = 0.28;
+
+    function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+
+    function mkParticle() {
+        return {
+            x:     Math.random() * W,
+            y:     Math.random() * H,
+            vx:    (Math.random() - 0.5) * SPEED,
+            vy:    (Math.random() - 0.5) * SPEED,
+            r:     Math.random() * 1.5 + 0.4,
+            alpha: Math.random() * 0.45 + 0.1,
+        };
+    }
+
+    function init() {
+        resize();
+        particles = Array.from({ length: COUNT }, mkParticle);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0) p.x = W;
+            if (p.x > W) p.x = 0;
+            if (p.y < 0) p.y = H;
+            if (p.y > H) p.y = 0;
+
+            /* dot */
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,' + p.alpha + ')';
+            ctx.fill();
+
+            /* connecting lines */
+            for (let j = i + 1; j < particles.length; j++) {
+                const q  = particles[j];
+                const dx = p.x - q.x, dy = p.y - q.y;
+                const d  = Math.sqrt(dx * dx + dy * dy);
+                if (d < MAX_DIST) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(q.x, q.y);
+                    ctx.strokeStyle = 'rgba(255,255,255,' + ((1 - d / MAX_DIST) * 0.08) + ')';
+                    ctx.lineWidth   = 0.6;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    init();
+    draw();
+})();
+</script>
+
+<script>
+/* ── Announcement Bar ── */
+(function () {
+    const bar = document.getElementById('ann-bar');
+    const btn = document.getElementById('ann-close');
+    if (!bar || !btn) return;
+    if (sessionStorage.getItem('ann-dismissed')) bar.style.display = 'none';
+    btn.addEventListener('click', function () {
+        bar.style.display = 'none';
+        sessionStorage.setItem('ann-dismissed', '1');
+    });
+})();
+</script>
+
+<script>
+/* ── Search & Filter ── */
+(function () {
+    const input     = document.getElementById('gameSearch');
+    const clearBtn  = document.getElementById('clearSearch');
+    const countEl   = document.getElementById('searchCount');
+    const badge     = document.getElementById('gameTotalBadge');
+    const noResults = document.getElementById('noResults');
     if (!input) return;
 
-    const gameButtons = Array.from(document.querySelectorAll('.game-button'));
+    /* Grab all game buttons once */
+    const buttons = Array.from(document.querySelectorAll('#gameGrid .game-button'));
 
-    gameButtons.forEach(btn => {
+    /* Cache original title text on each button element */
+    buttons.forEach(function (btn) {
         const overlay = btn.querySelector('.game-title-overlay');
-        if (!overlay) return;
-        if (!btn.dataset.originalTitle) {
-            btn.dataset.originalTitle = overlay.textContent.trim();
+        if (overlay && !btn.dataset.title) {
+            btn.dataset.title = overlay.textContent.trim();
         }
     });
 
-    function updateCount(n) {
+    function setCount(n) {
         countEl.textContent = n;
+        badge.textContent   = n + ' Game' + (n === 1 ? '' : 's');
     }
 
-    function clearHighlights(overlay) {
-        if (!overlay) return;
-        const parent = overlay.parentElement;
-        if (parent && parent.dataset.originalTitle) {
-            overlay.innerHTML = parent.dataset.originalTitle;
-        } else {
-            overlay.innerHTML = overlay.textContent;
-        }
-    }
-
-    function highlightMatch(text, term) {
-        if (!term) return text;
-        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('(' + escaped + ')', 'ig');
-        return text.replace(regex, '<mark>$1</mark>');
-    }
-
-    function escapeHtml(str) {
-        return str.replace(/[&<>"']/g, function (m) {
-            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+    function escHtml(str) {
+        return str.replace(/[&<>"']/g, function (c) {
+            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
         });
     }
 
-    function filterGames() {
-        const q = input.value.trim();
-        if (q === '') {
-            gameButtons.forEach(btn => {
-                btn.style.display = '';
-                const overlay = btn.querySelector('.game-title-overlay');
-                clearHighlights(overlay);
-            });
-            updateCount(gameButtons.length);
-            return;
-        }
+    function highlight(text, term) {
+        if (!term) return escHtml(text);
+        const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return escHtml(text).replace(new RegExp('(' + esc + ')', 'ig'), '<mark>$1</mark>');
+    }
 
+    function filter() {
+        const q  = input.value.trim();
+        const ql = q.toLowerCase();
         let visible = 0;
-        const qLower = q.toLowerCase();
 
-        gameButtons.forEach(btn => {
+        buttons.forEach(function (btn) {
             const overlay = btn.querySelector('.game-title-overlay');
-            const original = btn.dataset.originalTitle || (overlay && overlay.textContent.trim()) || '';
-            const hay = original.toLowerCase();
-            if (hay.includes(qLower)) {
+            const title   = btn.dataset.title || '';
+
+            if (!q || title.toLowerCase().includes(ql)) {
                 btn.style.display = '';
-                if (overlay) {
-                    overlay.innerHTML = highlightMatch(escapeHtml(original), q);
-                }
+                if (overlay) overlay.innerHTML = highlight(title, q);
                 visible++;
             } else {
                 btn.style.display = 'none';
-                if (overlay) clearHighlights(overlay);
+                if (overlay) overlay.textContent = title;
             }
         });
 
-        updateCount(visible);
+        setCount(visible);
+        if (noResults) noResults.style.display = (visible === 0 && q) ? 'block' : 'none';
     }
 
-    input.addEventListener('input', filterGames);
+    /* Initial count */
+    setCount(buttons.length);
+
+    input.addEventListener('input', filter);
     input.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            input.value = '';
-            filterGames();
-            input.blur();
-        }
+        if (e.key === 'Escape') { input.value = ''; filter(); input.blur(); }
     });
+    clearBtn.addEventListener('click', function () { input.value = ''; filter(); input.focus(); });
 
-    clearBtn.addEventListener('click', function () {
-        input.value = '';
-        filterGames();
-        input.focus();
-    });
-
-    updateCount(gameButtons.length);
-
+    /* Press "/" anywhere to focus search */
     window.addEventListener('keydown', function (e) {
-        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        const tag = document.activeElement.tagName;
+        if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') {
             e.preventDefault();
             input.focus();
             input.select();
@@ -1431,20 +1700,6 @@
     });
 })();
 </script>
+
 </body>
-    <script>
-    function closePopup() {
-        document.getElementById('announcementPopup').style.display = 'none';
-        // Optional: Save to session so it doesn't reappear immediately
-        sessionStorage.setItem('announcementSeen', 'true');
-    }
-
-    // Check if they've already seen it this session
-    window.onload = function() {
-        if (sessionStorage.getItem('announcementSeen')) {
-            document.getElementById('announcementPopup').style.display = 'none';
-        }
-    };
-</script>
-
 </html>
